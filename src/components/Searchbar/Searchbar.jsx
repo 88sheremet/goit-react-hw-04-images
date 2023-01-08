@@ -14,7 +14,6 @@ export const SearchBar = ({ handleFormSubmit }) => {
   const handleSubmit = e => {
     e.preventDefault();
 
-    const searchName = e.currentTarget.input.value;
     if (searchName === '') {
       Notiflix.Notify.failure(`Enter a query!`);
       return;
