@@ -1,64 +1,51 @@
 import { Button } from 'components/Button/Button';
 import { Loader } from 'components/Loader/Loader';
 import { SearchBar } from 'components/Searchbar/Searchbar';
-import { Component } from 'react';
 import css from '../App/App.module.css';
 import { fetchImages } from '../../utils/fetchImages';
 import { ImageGallery } from 'components/ImageGallery/ImageGallery';
 import Notiflix from 'notiflix';
+import { useState, useEffect } from 'react';
 
-export class App extends Component {
-  state = {
-    searchName: '',
-    page: 1,
-    images: [],
-    isLoading: false,
+export const App = () => {
+  const [searchName, setSearchName] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleFormSubmit = searchName => {
+    setSearchName(searchName);
+    setPage(1);
+    setImages([]);
+    setIsLoading(true);
   };
 
-  handleFormSubmit = searchName => {
-    this.setState({
-      searchName,
-      page: 1,
-      images: [],
-      isLoading: true,
-    });
-  };
-
-  componentDidUpdate(_, prevState) {
-    if (
-      this.state.searchName === prevState.searchName &&
-      this.state.page === prevState.page
-    ) {
-      return;
-    }
-
-    const { searchName, page } = this.state;
+  useEffect(() => {
+    if (searchName === '') return;
 
     fetchImages(searchName, page)
       .then(data => {
         if (data.hits.length === 0) {
           Notiflix.Notify.failure(`Images not found!`);
         } else {
-          this.setState(prevState => ({
-            images: [...prevState.images, ...data.hits],
-          }));
+          setImages(prevImages => [...prevImages, ...data.hits]);
         }
       })
       .catch(err => Notiflix.Notify.failure(err.message))
-      .finally(() => this.setState({ isLoading: false }));
-  }
+      .finally(() => setIsLoading(false));
+  }, [searchName, page]);
 
-  onLoadMore = () =>
-    this.setState(prevState => ({ page: prevState.page + 1, isLoading: true }));
+  const onLoadMore = () => {
+    setPage(page => page + 1);
+    setIsLoading(true);
+  };
 
-  render() {
-    return (
-      <div className={css.App}>
-        <SearchBar handleFormSubmit={this.handleFormSubmit} />
-        <ImageGallery images={this.state.images} />
-        <Loader isLoading={this.state.isLoading} />
-        {this.state.images.length > 0 && <Button loadMore={this.onLoadMore} />}
-      </div>
-    );
-  }
-}
+  return (
+    <div className={css.App}>
+      <SearchBar handleFormSubmit={handleFormSubmit} />
+      <ImageGallery images={images} />
+      <Loader isLoading={isLoading} />
+      {images.length > 0 && <Button loadMore={onLoadMore} />}
+    </div>
+  );
+};
